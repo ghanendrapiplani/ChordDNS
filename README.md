@@ -1,13 +1,13 @@
-#ChorDNS: DNS Resolution Analysis with a Distributed Hashtable Approach
+# ChorDNS: DNS Resolution Analysis with a Distributed Hashtable Approach
 ### Ghanendra Piplani, Tarush Abhaya Jain, Benjamin Michalowicz, Dheeraj Ramchandani
 
-##About
+## About
 
 
-##How to Run
+## How to Run
 
 
-##References
+## References
 
 
-##Etc.
+## Etc.
