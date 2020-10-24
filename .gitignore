@@ -1,0 +1,2 @@
+__pycache__/ # __pycache__/ directory
+*.py[cod] #Python object files and the like
