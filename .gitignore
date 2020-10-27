@@ -1,2 +1,9 @@
-__pycache__/ # __pycache__/ directory
+src/chord/__pycache__ # __pycache__/ directory
 *.py[cod] #Python object files and the like
+src/chord/*.py
+src/chord/*.pyc
+src/chord/*.pyo
+src/chord/*.pyd
+
+test.log
+__pycache__/
