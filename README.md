@@ -13,6 +13,6 @@
 ## Etc.
 
 # TODO:
-1) Download Datasets from [opendata.rapid7.com/sonar.fdns_v2/](opendata.rapid7.com/sonar.fdns_v2/) (For MX, CNAME, ANY, A, TXT, perhaps?)
+1) Download Datasets from [https://opendata.rapid7.com/sonar.fdns_v2/](https://opendata.rapid7.com/sonar.fdns_v2/) (For MX, CNAME, ANY, A, TXT, perhaps?)
 2) Extract them and see what works and what doesn't; make sure to use the .gitignore just in case and modify it as necessary
 
