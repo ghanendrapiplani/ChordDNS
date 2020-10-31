@@ -4,6 +4,9 @@ src/chord/*.py
 src/chord/*.pyc
 src/chord/*.pyo
 src/chord/*.pyd
+data/*.json
+data/*.gz
+
 
 test.log
 __pycache__/
