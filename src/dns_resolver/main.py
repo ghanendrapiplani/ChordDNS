@@ -5,8 +5,8 @@ import bisect
 import hashlib
 import random
 import os
-class_Resolver = da.import_da('resolver_dev')
-class_Node = da.import_da('node_dev')
+node_client = da.import_da('client')
+node_chord = da.import_da('chord')
 
 def hash_func(name, m):
     hash = int(hashlib.sha1(name.encode('utf-8')).hexdigest(), 16)
@@ -83,28 +83,27 @@ class Node_(da.NodeProcess):
         hashed_nodes_keys = list(hashed_nodes.keys())
         hashed_nodes_keys.sort()
         self.output('Hash values for all the nodes in sorted order: ', hashed_nodes_keys)
-        node_processes = list(self.new(class_Node.Node, num=len(hashed_nodes_keys)))
+        chord_processes = list(self.new(node_chord.Chord, num=len(hashed_nodes_keys)))
         node_tuples = []
         for i in range(0, len(hashed_nodes_keys)):
-            node_tuples.append((hashed_nodes_keys[i], node_processes[i], nodes[i]))
+            node_tuples.append((hashed_nodes_keys[i], chord_processes[i], nodes[i]))
         for i in range(0, len(hashed_nodes_keys)):
             pred_node = node_tuples[(i - 1)]
             succ_node = node_tuples[((i + 1) % len(hashed_nodes_keys))]
             finger_table = build_finger_table(i, m, hashed_nodes_keys, node_tuples)
-            self.output('Dheeraj ::: Finger table for node: ', node_tuples[i], ' is: ', finger_table)
             node_datas = assign_datas_to_node(i, hashed_datas_keys, hashed_nodes_keys, hashed_datas)
-            self._setup(node_processes[i], args=(node_tuples[i], m, pred_node, succ_node, finger_table, node_datas))
-        self._start(node_processes)
+            self._setup(chord_processes[i], args=(node_tuples[i], m, pred_node, succ_node, finger_table, node_datas))
+        self._start(chord_processes)
         website = take_input()
-        resolver_process = self.new(class_Resolver.Resolver)
-        self._setup(resolver_process, args=(resolver_process, m, node_tuples, website))
-        self._start(resolver_process)
-        super()._label('_st_label_705', block=False)
-        _st_label_705 = 0
-        while (_st_label_705 == 0):
-            _st_label_705 += 1
+        client_process = self.new(node_client.Client)
+        self._setup(client_process, args=(client_process, m, node_tuples, website))
+        self._start(client_process)
+        super()._label('_st_label_698', block=False)
+        _st_label_698 = 0
+        while (_st_label_698 == 0):
+            _st_label_698 += 1
             if False:
-                _st_label_705 += 1
+                _st_label_698 += 1
             else:
-                super()._label('_st_label_705', block=True)
-                _st_label_705 -= 1
+                super()._label('_st_label_698', block=True)
+                _st_label_698 -= 1

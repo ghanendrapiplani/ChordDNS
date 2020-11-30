@@ -4,8 +4,8 @@ import random
 
 import os
 
-class_Resolver = import_da('resolver_dev')
-class_Node = import_da('node_dev')
+node_client = import_da('client')
+node_chord = import_da('chord')
 
 def hash_func(name, m):
 	# Consistent hash function for the Chord system
@@ -95,12 +95,12 @@ def main():
 
 	config(channel={'reliable', 'fifo'})
 	# Creating a process for each node
-	node_processes = list(new(class_Node.Node, num=len(hashed_nodes_keys)))
+	chord_processes = list(new(node_chord.Chord, num=len(hashed_nodes_keys)))
 
 	# Binding hash_val, node process and node IP address for each node in a tuple
 	node_tuples = []
 	for i in range(0, len(hashed_nodes_keys)):
-		node_tuples.append((hashed_nodes_keys[i], node_processes[i], nodes[i]))
+		node_tuples.append((hashed_nodes_keys[i], chord_processes[i], nodes[i]))
 
 	# Building finger table and assigning DNS data to each node and setting up the nodes
 	# At the end, the Chord system will be setup in a ring topology
@@ -108,19 +108,18 @@ def main():
 		pred_node = node_tuples[i - 1]
 		succ_node = node_tuples[(i + 1) % len(hashed_nodes_keys)]
 		finger_table = build_finger_table(i, m, hashed_nodes_keys, node_tuples)
-		output('Dheeraj ::: Finger table for node: ', node_tuples[i], ' is: ', finger_table)
 		node_datas = assign_datas_to_node(i, hashed_datas_keys, hashed_nodes_keys, hashed_datas)
-		setup(node_processes[i], args=(node_tuples[i], m, pred_node, succ_node, finger_table, node_datas))
+		setup(chord_processes[i], args=(node_tuples[i], m, pred_node, succ_node, finger_table, node_datas))
 
 	# Starting the Chord ring
-	start(node_processes)
+	start(chord_processes)
 
 	# Prompting user for input
 	website = take_input()
 
-	# Creating, setting up, and starting a resolver process which will consult the Chord system to resolve the DNS query by the user
-	resolver_process = new(class_Resolver.Resolver)
-	setup(resolver_process, args=(resolver_process, m, node_tuples, website))
-	start(resolver_process)
+	# Creating, setting up, and starting a client process which will consult the Chord system to resolve the DNS query by the user
+	client_process = new(node_client.Client)
+	setup(client_process, args=(client_process, m, node_tuples, website))
+	start(client_process)
 
 	await(False)
