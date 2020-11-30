@@ -37,11 +37,12 @@ def assign_datas_to_node(idx, hashed_datas, hashed_datas_keys, hashed_nodes_keys
 	limit_s = hashed_nodes_keys[idx - 1]
 	limit_e = hashed_nodes_keys[idx]
 
-	start = bisect.bisect_left(hashed_datas_keys, limit_s)
+	# start = bisect.bisect_left(hashed_datas_keys, limit_s)
+	start = bisect.bisect(hashed_datas_keys, limit_s)
 	end = bisect.bisect(hashed_datas_keys, limit_e)
 
-	if limit_s == hashed_datas_keys[start]:
-		start += 1
+	# if limit_s == hashed_datas_keys[start]:
+	#	start += 1
 
 	datas = {}
 	if limit_s <= limit_e:
