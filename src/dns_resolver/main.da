@@ -1,0 +1,126 @@
+import bisect
+import hashlib
+import random
+
+import os
+
+class_Resolver = import_da('resolver_dev')
+class_Node = import_da('node_dev')
+
+def hash_func(name, m):
+	# Consistent hash function for the Chord system
+	hash = int(hashlib.sha1(name.encode('utf-8')).hexdigest(), 16)
+	hash_val = hash % 2**m
+	return hash_val
+
+def assign_datas_to_node(idx, hashed_datas_keys, hashed_nodes_keys, hashed_datas):
+	#  Distribute and assign DNS data to each node in the Chord system
+	lo_id = hashed_nodes_keys[idx - 1]
+	hi_id = hashed_nodes_keys[idx]
+
+	lo = bisect.bisect_left(hashed_datas_keys, lo_id)
+	if hashed_nodes_keys[idx - 1] == hashed_datas_keys[lo]:
+		lo += 1
+
+	datas = {}
+	if lo_id <= hi_id:
+		i = lo
+		while hashed_datas_keys[i] <= hi_id:
+			hash_val = hashed_datas_keys[i]
+			datas[hash_val] = hashed_datas[hash_val]
+			i += 1
+
+	else:
+		for i in range(lo, len(hashed_datas_keys)):
+			hash_val = hashed_datas_keys[i]
+			datas[hash_val] = hashed_datas[hash_val]
+		i = 0
+		while hashed_datas_keys[i] <= hi_id:
+			hash_val = hashed_datas_keys[i]
+			datas[hash_val] = hashed_datas[hash_val]
+			i += 1
+
+	return datas
+
+def build_finger_table(idx, m, hashed_nodes_keys, node_tuples):
+	#  Build the finger table for each node in the Chord system
+	hash_val = hashed_nodes_keys[idx]
+	finger_table = []
+	for i in range(0, m):
+		finger_idx = bisect.bisect_left(hashed_nodes_keys, (hash_val + 2**i) % 2**m)
+		finger_table.append(node_tuples[finger_idx % len(node_tuples)])
+	return finger_table
+
+
+def read_input_file(filename):
+	# Read the entire input dataset
+	datas = []
+	input_file = open(filename, 'r')
+	for line in input_file:
+		datas.append(tuple(line.strip().split(' ')))
+	return datas
+
+def take_input():
+	# Accept URL from the user to resolve
+	website = input("Enter website name: ")
+	return [website]
+
+def main():
+	datas = read_input_file('data/dns_records.txt')
+	m = 20
+
+	hash_vals = []
+	repeats = []
+	for i in datas:
+		hash_val = hash_func(i[0], m)
+		if hash_val not in hash_vals:
+			hash_vals.append(hash_val)
+		else:
+			repeats.append((hash_val, i))
+	output('Total collison by the hash function: ', len(repeats))
+	
+	hashed_datas = {hash_func(data[0], m): data for data in datas}
+	hashed_datas_keys = list(hashed_datas.keys())
+	hashed_datas_keys.sort()
+
+	nodes = ['1.2.3.5', '2.3.4.5', '11.22.33.55', '8.8.8.9', '2.22.1.2', '77.66.3.1',
+			'1.2.3.6', '2.3.4.6', '11.22.33.56', '8.8.8.10', '2.22.1.3', '77.66.3.2',
+			'1.2.3.7', '2.3.4.7', '11.22.33.57', '8.8.8.11', '2.22.1.4', '77.66.3.3',
+			'1.2.3.8', '2.3.4.8', '11.22.33.58', '8.8.8.12', '2.22.1.5', '77.66.3.4',
+			'1.2.3.9', '2.3.4.9', '11.22.33.59', '8.8.8.13', '2.22.1.6', '77.66.3.5']
+	hashed_nodes = {hash_func(node, m): node for node in nodes}
+	hashed_nodes_keys = list(hashed_nodes.keys())
+	hashed_nodes_keys.sort()
+	output('Hash values for all the nodes in sorted order: ', hashed_nodes_keys)
+
+	config(channel={'reliable', 'fifo'})
+	# Creating a process for each node
+	node_processes = list(new(class_Node.Node, num=len(hashed_nodes_keys)))
+
+	# Binding hash_val, node process and node IP address for each node in a tuple
+	node_tuples = []
+	for i in range(0, len(hashed_nodes_keys)):
+		node_tuples.append((hashed_nodes_keys[i], node_processes[i], nodes[i]))
+
+	# Building finger table and assigning DNS data to each node and setting up the nodes
+	# At the end, the Chord system will be setup in a ring topology
+	for i in range(0, len(hashed_nodes_keys)):
+		pred_node = node_tuples[i - 1]
+		succ_node = node_tuples[(i + 1) % len(hashed_nodes_keys)]
+		finger_table = build_finger_table(i, m, hashed_nodes_keys, node_tuples)
+		output('Dheeraj ::: Finger table for node: ', node_tuples[i], ' is: ', finger_table)
+		node_datas = assign_datas_to_node(i, hashed_datas_keys, hashed_nodes_keys, hashed_datas)
+		setup(node_processes[i], args=(node_tuples[i], m, pred_node, succ_node, finger_table, node_datas))
+
+	# Starting the Chord ring
+	start(node_processes)
+
+	# Prompting user for input
+	website = take_input()
+
+	# Creating, setting up, and starting a resolver process which will consult the Chord system to resolve the DNS query by the user
+	resolver_process = new(class_Resolver.Resolver)
+	setup(resolver_process, args=(resolver_process, m, node_tuples, website))
+	start(resolver_process)
+
+	await(False)
