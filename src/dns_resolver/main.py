@@ -8,36 +8,27 @@ import os
 node_client = da.import_da('client')
 node_chord = da.import_da('chord')
 
+def read_input_file(filename):
+    datas = []
+    input_file = open(filename, 'r')
+    for line in input_file:
+        datas.append(tuple(line.strip().split(' ')))
+    return datas
+
 def hash_func(name, m):
     hash = int(hashlib.sha1(name.encode('utf-8')).hexdigest(), 16)
     hash_val = (hash % (2 ** m))
     return hash_val
 
-def assign_datas_to_node(idx, hashed_datas_keys, hashed_nodes_keys, hashed_datas):
-    lo_id = hashed_nodes_keys[(idx - 1)]
-    hi_id = hashed_nodes_keys[idx]
-    lo = bisect.bisect_left(hashed_datas_keys, lo_id)
-    if (hashed_nodes_keys[(idx - 1)] == hashed_datas_keys[lo]):
-        lo += 1
-    datas = {}
-    if (lo_id <= hi_id):
-        i = lo
-        while (hashed_datas_keys[i] <= hi_id):
-            hash_val = hashed_datas_keys[i]
-            datas[hash_val] = hashed_datas[hash_val]
-            i += 1
-    else:
-        for i in range(lo, len(hashed_datas_keys)):
-            hash_val = hashed_datas_keys[i]
-            datas[hash_val] = hashed_datas[hash_val]
-        i = 0
-        while (hashed_datas_keys[i] <= hi_id):
-            hash_val = hashed_datas_keys[i]
-            datas[hash_val] = hashed_datas[hash_val]
-            i += 1
-    return datas
+def build_setup_args(idx, m, node_tuples, hashed_nodes_keys, hashed_datas, hashed_datas_keys):
+    setup_args = {}
+    setup_args['pred_node'] = node_tuples[(idx - 1)]
+    setup_args['succ_node'] = node_tuples[((idx + 1) % len(hashed_nodes_keys))]
+    setup_args['finger_table'] = build_finger_table(idx, m, node_tuples, hashed_nodes_keys)
+    setup_args['node_datas'] = assign_datas_to_node(idx, hashed_datas, hashed_datas_keys, hashed_nodes_keys)
+    return setup_args
 
-def build_finger_table(idx, m, hashed_nodes_keys, node_tuples):
+def build_finger_table(idx, m, node_tuples, hashed_nodes_keys):
     hash_val = hashed_nodes_keys[idx]
     finger_table = []
     for i in range(0, m):
@@ -45,11 +36,25 @@ def build_finger_table(idx, m, hashed_nodes_keys, node_tuples):
         finger_table.append(node_tuples[(finger_idx % len(node_tuples))])
     return finger_table
 
-def read_input_file(filename):
-    datas = []
-    input_file = open(filename, 'r')
-    for line in input_file:
-        datas.append(tuple(line.strip().split(' ')))
+def assign_datas_to_node(idx, hashed_datas, hashed_datas_keys, hashed_nodes_keys):
+    limit_s = hashed_nodes_keys[(idx - 1)]
+    limit_e = hashed_nodes_keys[idx]
+    start = bisect.bisect_left(hashed_datas_keys, limit_s)
+    end = bisect.bisect(hashed_datas_keys, limit_e)
+    if (limit_s == hashed_datas_keys[start]):
+        start += 1
+    datas = {}
+    if (limit_s <= limit_e):
+        for i in range(start, end):
+            hash_val = hashed_datas_keys[i]
+            datas[hash_val] = hashed_datas[hash_val]
+    else:
+        for i in range(start, len(hashed_datas_keys)):
+            hash_val = hashed_datas_keys[i]
+            datas[hash_val] = hashed_datas[hash_val]
+        for i in range(0, end):
+            hash_val = hashed_datas_keys[i]
+            datas[hash_val] = hashed_datas[hash_val]
     return datas
 
 def take_input():
@@ -88,22 +93,19 @@ class Node_(da.NodeProcess):
         for i in range(0, len(hashed_nodes_keys)):
             node_tuples.append((hashed_nodes_keys[i], chord_processes[i], nodes[i]))
         for i in range(0, len(hashed_nodes_keys)):
-            pred_node = node_tuples[(i - 1)]
-            succ_node = node_tuples[((i + 1) % len(hashed_nodes_keys))]
-            finger_table = build_finger_table(i, m, hashed_nodes_keys, node_tuples)
-            node_datas = assign_datas_to_node(i, hashed_datas_keys, hashed_nodes_keys, hashed_datas)
-            self._setup(chord_processes[i], args=(node_tuples[i], m, pred_node, succ_node, finger_table, node_datas))
+            setup_args = build_setup_args(i, m, node_tuples, hashed_nodes_keys, hashed_datas, hashed_datas_keys)
+            self._setup(chord_processes[i], args=(node_tuples[i], m, setup_args['pred_node'], setup_args['succ_node'], setup_args['finger_table'], setup_args['node_datas']))
         self._start(chord_processes)
         website = take_input()
         client_process = self.new(node_client.Client)
         self._setup(client_process, args=(client_process, m, node_tuples, website))
         self._start(client_process)
-        super()._label('_st_label_698', block=False)
-        _st_label_698 = 0
-        while (_st_label_698 == 0):
-            _st_label_698 += 1
+        super()._label('_st_label_732', block=False)
+        _st_label_732 = 0
+        while (_st_label_732 == 0):
+            _st_label_732 += 1
             if False:
-                _st_label_698 += 1
+                _st_label_732 += 1
             else:
-                super()._label('_st_label_698', block=True)
-                _st_label_698 -= 1
+                super()._label('_st_label_732', block=True)
+                _st_label_732 -= 1
