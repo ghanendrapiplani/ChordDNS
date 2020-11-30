@@ -2,9 +2,9 @@
 import da
 _config_object = {}
 import bisect
-import hashlib
 import random
 import os
+from hash_func import hash_func
 node_client = da.import_da('client')
 node_chord = da.import_da('chord')
 
@@ -14,11 +14,6 @@ def read_input_file(filename):
     for line in input_file:
         datas.append(tuple(line.strip().split(' ')))
     return datas
-
-def hash_func(name, m):
-    hash = int(hashlib.sha1(name.encode('utf-8')).hexdigest(), 16)
-    hash_val = (hash % (2 ** m))
-    return hash_val
 
 def build_setup_args(idx, m, node_tuples, hashed_nodes_keys, hashed_datas, hashed_datas_keys):
     setup_args = {}
@@ -100,12 +95,12 @@ class Node_(da.NodeProcess):
         client_process = self.new(node_client.Client)
         self._setup(client_process, args=(client_process, m, node_tuples, website))
         self._start(client_process)
-        super()._label('_st_label_732', block=False)
-        _st_label_732 = 0
-        while (_st_label_732 == 0):
-            _st_label_732 += 1
+        super()._label('_st_label_703', block=False)
+        _st_label_703 = 0
+        while (_st_label_703 == 0):
+            _st_label_703 += 1
             if False:
-                _st_label_732 += 1
+                _st_label_703 += 1
             else:
-                super()._label('_st_label_732', block=True)
-                _st_label_732 -= 1
+                super()._label('_st_label_703', block=True)
+                _st_label_703 -= 1

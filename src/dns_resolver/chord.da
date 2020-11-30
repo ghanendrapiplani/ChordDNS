@@ -14,40 +14,40 @@ class Chord(process):
 		self.node_datas = node_datas
 
 	def run():
-		output('{node} is up: pred={p}, succ={s}, finger={f}, records={r}'
+		output('{node} is up: pred={p}, succ={s}, finger_table={f}, node_datas={r}'
 			   .format(node=self.node_tuple, p=self.pred_node,
 					   s=self.succ_node, f=self.finger_table, r=list(self.node_datas.items())), level=logging.DEBUG)
 		await(False)
 
 	def receive(msg=('get', query)):
 		query['hops'] += 1
-		query['hops_name_list'].append(self.node_tuple[2])
-		send(('result', query, self.node_datas.get(query['id'], None), self.node_tuple), to=query['client'])
+		query['hops_names'].append(self.node_tuple[IP])
+		send(('result', query, self.node_datas.get(query['hash_val'], None), self.node_tuple), to=query['client_process'])
 		output('{node} sent result of query = {query} to: {client}'
-			   .format(node=self.node_tuple, query=query, client=query['client']))
+			   .format(node=self.node_tuple, query=query, client=query['client_process']))
 
 	def receive(msg=('find_successor', query)):
 		query['hops'] += 1
-		query['hops_name_list'].append(self.node_tuple[2])
-		if self.in_range(self.node_tuple[HASH_VAL], self.succ_node[HASH_VAL], query['id']):
+		query['hops_names'].append(self.node_tuple[IP])
+		if self.in_range(start=self.node_tuple[HASH_VAL], end=self.succ_node[HASH_VAL], val_to_check=query['hash_val']):
 			node = self.succ_node
-			send(('successor', query, node), to=query['client'])
+			send(('successor', query, node), to=query['client_process'])
 			output('{node} sent successor={successor} for query={query} to: {client}'
-				   .format(node=self.node_tuple, succ_node=node, query=query, client=query['client']))
+				   .format(node=self.node_tuple, succ_node=node, query=query, client=query['client_process']))
 		else:
-			node = self.closest_preceding_node(query['id'])
+			node = self.closest_preceding_node(query['hash_val'])
 			send(('find_successor', query), to=node[PROCESS_ID])
 			output('{node} delegated find_successor for query={query} to: {delegatee}'
 				   .format(node=self.node_tuple, query=query, delegatee=node))
 
-	def closest_preceding_node(id):
+	def closest_preceding_node(hash_val):
 		for i in range(self.m - 1, -1, -1):
-			if self.in_range(self.node_tuple[HASH_VAL], id, self.finger_table[i][HASH_VAL]):
+			if self.in_range(start=self.node_tuple[HASH_VAL], end=hash_val, val_to_check=self.finger_table[i][HASH_VAL]):
 				return self.finger_table[i]
 
-	def in_range(s, e, id):  # id in range (s, e]?
-		if id < s:
-			id += ((1 << self.m) - 1)
-		if e < s:
-			e += ((1 << self.m) - 1)
-		return (id > s and id <= e)
+	def in_range(start, end, val_to_check):  # id in range (s, e]?
+		if val_to_check < start:
+			val_to_check += 2**self.m - 1
+		if end < start:
+			end += 2**self.m - 1
+		return (val_to_check > start and val_to_check <= end)

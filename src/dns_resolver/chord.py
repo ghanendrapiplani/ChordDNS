@@ -30,7 +30,7 @@ class Chord(da.DistProcess):
         self._state.node_datas = self._state.node_datas
 
     def run(self):
-        self.output('{node} is up: pred={p}, succ={s}, finger={f}, records={r}'.format(node=self._state.node_tuple, p=self._state.pred_node, s=self._state.succ_node, f=self._state.finger_table, r=list(self._state.node_datas.items())), level=logging.DEBUG)
+        self.output('{node} is up: pred={p}, succ={s}, finger_table={f}, node_datas={r}'.format(node=self._state.node_tuple, p=self._state.pred_node, s=self._state.succ_node, f=self._state.finger_table, r=list(self._state.node_datas.items())), level=logging.DEBUG)
         super()._label('_st_label_241', block=False)
         _st_label_241 = 0
         while (_st_label_241 == 0):
@@ -41,35 +41,35 @@ class Chord(da.DistProcess):
                 super()._label('_st_label_241', block=True)
                 _st_label_241 -= 1
 
-    def closest_preceding_node(self, id):
+    def closest_preceding_node(self, hash_val):
         for i in range((self._state.m - 1), (- 1), (- 1)):
-            if self.in_range(self._state.node_tuple[HASH_VAL], id, self._state.finger_table[i][HASH_VAL]):
+            if self.in_range(start=self._state.node_tuple[HASH_VAL], end=hash_val, val_to_check=self._state.finger_table[i][HASH_VAL]):
                 return self._state.finger_table[i]
 
-    def in_range(self, s, e, id):
-        if (id < s):
-            id += ((1 << self._state.m) - 1)
-        if (e < s):
-            e += ((1 << self._state.m) - 1)
-        return ((id > s) and (id <= e))
+    def in_range(self, start, end, val_to_check):
+        if (val_to_check < start):
+            val_to_check += ((2 ** self._state.m) - 1)
+        if (end < start):
+            end += ((2 ** self._state.m) - 1)
+        return ((val_to_check > start) and (val_to_check <= end))
 
     def _Chord_handler_245(self, query):
         query['hops'] += 1
-        query['hops_name_list'].append(self._state.node_tuple[2])
-        self.send(('result', query, self._state.node_datas.get(query['id'], None), self._state.node_tuple), to=query['client'])
-        self.output('{node} sent result of query = {query} to: {client}'.format(node=self._state.node_tuple, query=query, client=query['client']))
+        query['hops_names'].append(self._state.node_tuple[IP])
+        self.send(('result', query, self._state.node_datas.get(query['hash_val'], None), self._state.node_tuple), to=query['client_process'])
+        self.output('{node} sent result of query = {query} to: {client}'.format(node=self._state.node_tuple, query=query, client=query['client_process']))
     _Chord_handler_245._labels = None
     _Chord_handler_245._notlabels = None
 
     def _Chord_handler_301(self, query):
         query['hops'] += 1
-        query['hops_name_list'].append(self._state.node_tuple[2])
-        if self.in_range(self._state.node_tuple[HASH_VAL], self._state.succ_node[HASH_VAL], query['id']):
+        query['hops_names'].append(self._state.node_tuple[IP])
+        if self.in_range(start=self._state.node_tuple[HASH_VAL], end=self._state.succ_node[HASH_VAL], val_to_check=query['hash_val']):
             node = self._state.succ_node
-            self.send(('successor', query, node), to=query['client'])
-            self.output('{node} sent successor={successor} for query={query} to: {client}'.format(node=self._state.node_tuple, succ_node=node, query=query, client=query['client']))
+            self.send(('successor', query, node), to=query['client_process'])
+            self.output('{node} sent successor={successor} for query={query} to: {client}'.format(node=self._state.node_tuple, succ_node=node, query=query, client=query['client_process']))
         else:
-            node = self.closest_preceding_node(query['id'])
+            node = self.closest_preceding_node(query['hash_val'])
             self.send(('find_successor', query), to=node[PROCESS_ID])
             self.output('{node} delegated find_successor for query={query} to: {delegatee}'.format(node=self._state.node_tuple, query=query, delegatee=node))
     _Chord_handler_301._labels = None
