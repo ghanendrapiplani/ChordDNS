@@ -1,9 +1,9 @@
-src/chord/__pycache__ # __pycache__/ directory
+src/dns_resolver/__pycache__ # __pycache__/ directory
 *.py[cod] #Python object files and the like
-src/chord/*.py
-src/chord/*.pyc
-src/chord/*.pyo
-src/chord/*.pyd
+src/dns_resolver/*.py
+src/dns_resolver/*.pyc
+src/dns_resolver/*.pyo
+src/dns_resolver/*.pyd
 data/*.json
 data/*.gz
 
