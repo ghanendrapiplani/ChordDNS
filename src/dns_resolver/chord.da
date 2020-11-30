@@ -1,0 +1,53 @@
+import logging
+HASH_VAL = 0
+PROCESS_ID = 1
+IP = 2
+
+
+class Chord(process):
+	def setup(node_tuple, m, pred_node, succ_node, finger_table, node_datas):
+		self.node_tuple = node_tuple
+		self.m = m
+		self.pred_node = pred_node
+		self.succ_node = succ_node
+		self.finger_table = finger_table
+		self.node_datas = node_datas
+
+	def run():
+		output('{node} is up: pred={p}, succ={s}, finger={f}, records={r}'
+			   .format(node=self.node_tuple, p=self.pred_node,
+					   s=self.succ_node, f=self.finger_table, r=list(self.node_datas.items())), level=logging.DEBUG)
+		await(False)
+
+	def receive(msg=('get', query)):
+		query['hops'] += 1
+		query['hops_name_list'].append(self.node_tuple[2])
+		send(('result', query, self.node_datas.get(query['id'], None), self.node_tuple), to=query['client'])
+		output('{node} sent result of query = {query} to: {client}'
+			   .format(node=self.node_tuple, query=query, client=query['client']))
+
+	def receive(msg=('find_successor', query)):
+		query['hops'] += 1
+		query['hops_name_list'].append(self.node_tuple[2])
+		if self.in_range(self.node_tuple[HASH_VAL], self.succ_node[HASH_VAL], query['id']):
+			node = self.succ_node
+			send(('successor', query, node), to=query['client'])
+			output('{node} sent successor={successor} for query={query} to: {client}'
+				   .format(node=self.node_tuple, succ_node=node, query=query, client=query['client']))
+		else:
+			node = self.closest_preceding_node(query['id'])
+			send(('find_successor', query), to=node[PROCESS_ID])
+			output('{node} delegated find_successor for query={query} to: {delegatee}'
+				   .format(node=self.node_tuple, query=query, delegatee=node))
+
+	def closest_preceding_node(id):
+		for i in range(self.m - 1, -1, -1):
+			if self.in_range(self.node_tuple[HASH_VAL], id, self.finger_table[i][HASH_VAL]):
+				return self.finger_table[i]
+
+	def in_range(s, e, id):  # id in range (s, e]?
+		if id < s:
+			id += ((1 << self.m) - 1)
+		if e < s:
+			e += ((1 << self.m) - 1)
+		return (id > s and id <= e)

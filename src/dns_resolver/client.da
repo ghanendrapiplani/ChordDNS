@@ -1,0 +1,69 @@
+import logging
+import random
+import hashlib
+import time
+
+class Client(process):
+	def setup(process_id, m, node_tuples, website):
+		self.process_id = process_id
+		self.m = m
+		self.node_tuples = node_tuples
+
+		self.website = website
+
+		self.query_count = 0
+		self.start_times = dict()
+		self.end_times = dict()
+		self.resolution_latencies = set()
+		self.hops = 0
+		self.sleep_time = 0
+		self.namesList = list()
+
+	def run():
+		output(self.process_id, " has been started.")
+		for name in self.website:
+			self.resolve(name)
+		await(False)
+
+	def resolve(name):
+		#  Resolve a request for a name by finding the node for which the given request maps to
+		node_tuple = random.choice(self.node_tuples)
+		self.query_count += 1
+		query = {
+			'key': name,
+			'id': self.hash_func(name, self.m),
+			'request_id': self.obtain_request_id(),
+			'client': self.process_id,
+			'hops': self.hops,
+			'hops_name_list': self.namesList
+		}
+		self.start_times[query['request_id']] = time.time()
+
+		send(('find_successor', query), to=node_tuple[1])
+		output('Sent find_successor message for query: {q} to {node}'.format(q=query, node=node_tuple))
+		await(query['request_id'] in self.end_times)
+
+	def receive(msg=('successor', query, succ_node)):
+		#  Once the successor(owner) of the key is found, lookup the key's value.
+		send(('get', query), to=succ_node[1])
+		output('Sent get to: ', succ_node)
+
+	def receive(msg=('result', query, result, authority)):
+		#  Display the result obtained for a particular query
+		self.end_times[query['request_id']] = time.time()
+		output('Result of query for {query} = {ipaddr}'.format(query=query['key'], ipaddr=result))
+		self.resolution_latencies.add((self.end_times[query['request_id']] - self.start_times[query['request_id']]))
+		output('{key}, {resTime}, {hops}, {nodesList}'.
+			   format(key=query['key'], hops=query['hops'],
+					  resTime=int(
+						  round((self.end_times[query['request_id']] - self.start_times[query['request_id']]) * 1000,
+								0)),
+					  nodesList=query['hops_name_list']), level=logging.DEBUG)
+
+	def hash_func(name, m):
+		hash = int(hashlib.sha1(name.encode('utf-8')).hexdigest(), 16)
+		hash_val = hash % 2**m
+		return hash_val
+
+	def obtain_request_id():
+		return str(self.process_id) + '-' + str(self.query_count)
