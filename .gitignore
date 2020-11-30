@@ -1,14 +1,16 @@
-#src/dns_resolver/__pycache__ # __pycache__/ directory
-#*.py[cod] #Python object files and the like
-#src/dns_resolver/*.py
-#src/dns_resolver/*.pyc
-#src/dns_resolver/*.pyo
-#src/dns_resolver/*.pyd
+src/dns_resolver/__pycache__ # __pycache__/ directory
+*.py[cod] #Python object files and the like
+src/dns_resolver/main.py
+src/dns_resolver/chord.py
+src/dns_resolver/client.py
+src/dns_resolver/*.pyc
+src/dns_resolver/*.pyo
+src/dns_resolver/*.pyd
 data/*.json
 data/*.gz
 
 
-#test.log
-#__pycache__/
+test.log
+__pycache__/
 
 .DS_Store
