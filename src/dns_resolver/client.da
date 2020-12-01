@@ -30,11 +30,11 @@ class Client(process):
 		self.query_count += 1
 		self.start_times[query['request_id']] = time.time()
 
-		send(('find_successor', query), to=starting_node_tuple[1])
-		output('Sent find_successor message for query: {q} to {node}'.format(q=query, node=starting_node_tuple))
+		send(('find_next_node', query), to=starting_node_tuple[1])
+		output('Sent find_next_node message for query: {q} to {node}'.format(q=query, node=starting_node_tuple))
 		await(query['request_id'] in self.end_times)
 
-	def receive(msg=('successor', query, succ_node)):
+	def receive(msg=('next', query, succ_node)):
 		#  Once the successor(owner) of the key is found, lookup the key's value.
 		send(('get', query), to=succ_node[1])
 		output('Sent get to: ', succ_node)

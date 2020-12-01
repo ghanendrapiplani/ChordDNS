@@ -23,21 +23,21 @@ class Chord(process):
 		query['hops'] += 1
 		query['hops_names'].append(self.node_tuple[IP])
 		send(('result', query, self.node_datas.get(query['hash_val'], None), self.node_tuple), to=query['client_process'])
-		output('{node} sent result of query = {query} to: {client}'
-			   .format(node=self.node_tuple, query=query, client=query['client_process']))
+		output('{} forwarded query:{} to node: {}'
+			   .format(self.node_tuple, query, query['client_process']))
 
-	def receive(msg=('find_successor', query)):
+	def receive(msg=('find_next_node', query)):
 		query['hops'] += 1
 		query['hops_names'].append(self.node_tuple[IP])
 		if self.in_range(start=self.node_tuple[HASH_VAL], end=self.succ_node[HASH_VAL], val_to_check=query['hash_val']):
 			node = self.succ_node
-			send(('successor', query, node), to=query['client_process'])
+			send(('next', query, node), to=query['client_process'])
 			output('{node} sent successor={successor} for query={query} to: {client}'
 				   .format(node=self.node_tuple, succ_node=node, query=query, client=query['client_process']))
 		else:
 			node = self.closest_preceding_node(query['hash_val'])
-			send(('find_successor', query), to=node[PROCESS_ID])
-			output('{node} delegated find_successor for query={query} to: {delegatee}'
+			send(('find_next_node', query), to=node[PROCESS_ID])
+			output('{node} delegated find_next_node for query={query} to: {delegatee}'
 				   .format(node=self.node_tuple, query=query, delegatee=node))
 
 	def closest_preceding_node(hash_val):
