@@ -3,7 +3,7 @@
 import hashlib
 import zlib
 import configparser
-from passlib.context import CryptContext
+#from passlib.context import CryptContext
 
 
 def hash_func(name, m):
