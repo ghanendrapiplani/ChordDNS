@@ -8,7 +8,7 @@ rm -f dig-NS-data.csv
 touch dig-NS-data.csv
 echo "NS Records runtime" >> dig-NS-data.csv
 echo "Website,Runtime (seconds)" >> dig-NS-data.csv
-cat NS-IPS.txt | while read line
+cat ALL-IPS.txt | while read line
 do
   res=$({ /usr/bin/time -f %e dig $line NS >/dev/null ; } 2>&1) 
 
