@@ -3,6 +3,7 @@ src/dns_resolver/__pycache__ # __pycache__/ directory
 src/dns_resolver/main.py
 src/dns_resolver/chord.py
 src/dns_resolver/client.py
+extract_from_log.py
 src/dns_resolver/*.pyc
 src/dns_resolver/*.pyo
 src/dns_resolver/*.pyd
@@ -10,7 +11,7 @@ data/*.json
 data/*.gz
 
 
-test.log
+*.log
 __pycache__/
 
 .DS_Store

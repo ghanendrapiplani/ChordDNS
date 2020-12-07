@@ -1,7 +1,8 @@
 import logging
-HASH_VAL = 0
-PROCESS_ID = 1
-IP = 2
+from constants import *
+# HASH_VAL = 0
+# PROCESS_ID = 1
+# IP = 2
 
 
 class Chord(process):
@@ -19,35 +20,36 @@ class Chord(process):
 					   s=self.succ_node, f=self.finger_table, r=list(self.node_datas.items())), level=logging.DEBUG)
 		await(False)
 
-	def receive(msg=('get', query)):
-		query['hops'] += 1
-		query['hops_names'].append(self.node_tuple[IP])
-		send(('result', query, self.node_datas.get(query['hash_val'], None), self.node_tuple), to=query['client_process'])
-		output('{} forwarded query:{} to node: {}'
-			   .format(self.node_tuple, query, query['client_process']))
-
-	def receive(msg=('find_next_node', query)):
-		query['hops'] += 1
-		query['hops_names'].append(self.node_tuple[IP])
-		if self.in_range(start=self.node_tuple[HASH_VAL], end=self.succ_node[HASH_VAL], val_to_check=query['hash_val']):
-			node = self.succ_node
-			send(('next', query, node), to=query['client_process'])
-			output('{node} sent successor={successor} for query={query} to: {client}'
-				   .format(node=self.node_tuple, succ_node=node, query=query, client=query['client_process']))
-		else:
-			node = self.closest_preceding_node(query['hash_val'])
-			send(('find_next_node', query), to=node[PROCESS_ID])
-			output('{node} delegated find_next_node for query={query} to: {delegatee}'
-				   .format(node=self.node_tuple, query=query, delegatee=node))
-
-	def closest_preceding_node(hash_val):
-		for i in range(self.m - 1, -1, -1):
-			if self.in_range(start=self.node_tuple[HASH_VAL], end=hash_val, val_to_check=self.finger_table[i][HASH_VAL]):
-				return self.finger_table[i]
-
-	def in_range(start, end, val_to_check):  # id in range (s, e]?
-		if val_to_check < start:
-			val_to_check += 2**self.m - 1
+	def belongs_in_between(start, end, val_to_check):
+		# if val_to_check belongs in between start and end
 		if end < start:
 			end += 2**self.m - 1
+		if val_to_check < start:
+			val_to_check += 2**self.m - 1
 		return (val_to_check > start and val_to_check <= end)
+
+	def receive(msg=('get', query)):
+		query['hops_ctr'] += 1
+		query['hops_nodes'].append(self.node_tuple[IP])
+		send(('result', query, self.node_datas.get(query['hash_val'], None), self.node_tuple), to=query['client_process'])
+		output('{} forwarded query:{} to node: {}'
+			   .format(self.node_tuple, query, query['client_process']), level=logging.DEBUG)
+
+	def receive(msg=('find_next_node', query)):
+		query['hops_ctr'] += 1
+		query['hops_nodes'].append(self.node_tuple[IP])
+		if self.belongs_in_between(start=self.node_tuple[HASH_VAL], end=self.succ_node[HASH_VAL], val_to_check=query['hash_val']):
+			node = self.succ_node
+			send(('next_node', query, node), to=query['client_process'])
+			output('{node} sent successor={succ_node} for query={query} to: {client}'
+				   .format(node=self.node_tuple, succ_node=node, query=query, client=query['client_process']), level=logging.DEBUG)
+		else:
+			node = self.closest_preceding_finger(query['hash_val'])
+			send(('find_next_node', query), to=node[PROCESS_ID])
+			output('{node} delegated find_next_node for query={query} to: {delegatee}'
+				   .format(node=self.node_tuple, query=query, delegatee=node), level=logging.DEBUG)
+
+	def closest_preceding_finger(hash_val):
+		for i in range(self.m - 1, -1, -1):
+			if self.belongs_in_between(start=self.node_tuple[HASH_VAL], end=hash_val, val_to_check=self.finger_table[i][HASH_VAL]):
+				return self.finger_table[i]

@@ -39,12 +39,10 @@ def assign_datas_to_node(idx, hashed_datas, hashed_datas_keys, hashed_nodes_keys
 	limit_s = hashed_nodes_keys[idx - 1]
 	limit_e = hashed_nodes_keys[idx]
 
-	# start = bisect.bisect_left(hashed_datas_keys, limit_s)
 	start = bisect.bisect(hashed_datas_keys, limit_s)
+	# start = find_index(hashed_datas_keys, limit_s)
 	end = bisect.bisect(hashed_datas_keys, limit_e)
-
-	# if limit_s == hashed_datas_keys[start]:
-	#	start += 1
+	#end = find_index(hashed_datas_keys, limit_e)
 
 	datas = {}
 	if limit_s <= limit_e:
@@ -64,13 +62,37 @@ def assign_datas_to_node(idx, hashed_datas, hashed_datas_keys, hashed_nodes_keys
 
 def take_input():
 	# Accept URL from the user to resolve
-	website = input("Enter website name: ")
-	return [website]
+	query = input("Enter query in the format <domain_name><space><query_type>: ")
+	inputs = query.split(' ')
+	return inputs[0], inputs[1]
+
+#def find_index(sorted_hash_vals, value):
+#	try:
+#		keys = sorted_hash_vals
+#		i = int(len(keys)/2)
+#		while i > 0 and len(keys) > 1:
+#			if value > keys[i]:
+#				if len(keys[i+1:]) != 0:
+#					keys = keys[i+1:]
+#				else:
+#					keys = keys[i:]
+#			elif value < keys[i]:
+#				keys = keys[:i]
+#			i = int(i/2)
+#		idx = sorted_hash_vals.index(keys[0])
+#		if value > keys[0]:
+#			return idx + 1
+#		else:
+#			return idx
+#	except:
+#		print(value)
+#		print(i)
+#		print(keys)
 
 def main():
 
-	datas = read_input_file('data/dns_records.txt')
-	m = 20
+	m = 50
+	datas = read_input_file('data/Final-400K_dev_10K.txt')
 
 	hash_vals = []
 	repeats = []
@@ -83,21 +105,14 @@ def main():
 			repeats.append((hash_val, i))
 	output('Total collison by the hash function: ', len(repeats))
 
-
-
 	hashed_datas = {hash_func(data[0], m): data for data in datas}
 	hashed_datas_keys = list(hashed_datas.keys())
 	hashed_datas_keys.sort()
 
 	nodes = []
-	for i in range(0, 30):
+	for i in range(0, 50):
 		nodes.append(socket.inet_ntoa(struct.pack('>I', random.randint(1, 0xffffffff))))
 
-	# nodes = ['1.2.3.5', '2.3.4.5', '11.22.33.55', '8.8.8.9', '2.22.1.2', '77.66.3.1',
-	#		'1.2.3.6', '2.3.4.6', '11.22.33.56', '8.8.8.10', '2.22.1.3', '77.66.3.2',
-	#		'1.2.3.7', '2.3.4.7', '11.22.33.57', '8.8.8.11', '2.22.1.4', '77.66.3.3',
-	#		'1.2.3.8', '2.3.4.8', '11.22.33.58', '8.8.8.12', '2.22.1.5', '77.66.3.4',
-	#		'1.2.3.9', '2.3.4.9', '11.22.33.59', '8.8.8.13', '2.22.1.6', '77.66.3.5']
 	hashed_nodes = {hash_func(node, m): node for node in nodes}
 	hashed_nodes_keys = list(hashed_nodes.keys())
 	hashed_nodes_keys.sort()
@@ -122,11 +137,12 @@ def main():
 	start(chord_processes)
 
 	# Prompting user for input
-	website = take_input()
+	website, query_type = take_input()
+	#query_type = 'A'
 
 	# Creating, setting up, and starting a client process which will consult the Chord system to resolve the DNS query by the user
 	client_process = new(node_client.Client)
-	setup(client_process, args=(client_process, m, node_tuples, website))
+	setup(client_process, args=(client_process, m, node_tuples, [website], query_type))
 	start(client_process)
 
 	await(False)
