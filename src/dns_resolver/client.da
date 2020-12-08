@@ -16,7 +16,6 @@ class Client(process):
 		self.end = {}
 		self.resolution_latencies = set()
 		self.hops_ctr = 0
-		#self.sleep_time = 0
 		self.hops_nodes = []
 
 	def run():
@@ -32,7 +31,7 @@ class Client(process):
 		await(False)
 
 	def receive(msg=('next_node', query, succ_node)):
-		#  Once the successor(owner) of the key is found, lookup the key's value.
+		#  Once the owner of the key is found, lookup the key's value.
 		send(('get', query), to=succ_node[1])
 		output('Sent get to: ', succ_node, level=logging.DEBUG)
 

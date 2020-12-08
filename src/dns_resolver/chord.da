@@ -1,9 +1,5 @@
 import logging
 from constants import *
-# HASH_VAL = 0
-# PROCESS_ID = 1
-# IP = 2
-
 
 class Chord(process):
 	def setup(node_tuple, m, pred_node, succ_node, finger_table, node_datas):

@@ -24,13 +24,4 @@ DNS Chord implementation for CSE 534 Final Project.
 ## How to Run
 
 1. `conda activate py36`
-2. `python -m da --message-buffer-size 1000000 -F output --logfile --logfilename test.log src/dns_resolver/main.da`
-
-## References
-
-## TODO
-
-1. ~~Installation~~
-2. ~~How to run?~~
-3. Getting data files to work
-4. Plotting tests results
+2. From the root folder, run the following: `python -m da --message-buffer-size 500000 src/dns_resolver/main.da`
